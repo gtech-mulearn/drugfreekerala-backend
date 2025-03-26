@@ -1,7 +1,7 @@
 # Setup
 
 1. run following to up
-   `docker compose up --build -d'
+   `docker compose up --build -d`
 2. Setup .env file reffer .env.sample
 3. run following to create tables
    `docker compose exec backend python init.py`
