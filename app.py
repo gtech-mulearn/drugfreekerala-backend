@@ -34,9 +34,9 @@ async def create(data: CreateUserDataRequest, session: Session = Depends(get_ses
         data = UserData(name=data.name, email=data.email)
         session.add(data)
         session.commit()
-        return {"message": "User created"}
+        return {"message": "User created", 'id': data.id}
     except IntegrityError:
-        return {"message": "User already exists"}
+        return {"message": "User already exists", 'is_error': True}
 
 
 @application.get("/api/v1/drugfreekerala/get/", description="Get all users")
@@ -44,6 +44,8 @@ async def get_all_users(
     session: Session = Depends(get_session), email: EmailStr = Query(...)
 ):
     data = session.query(UserData).filter(UserData.email == email).first()
+    if not data:
+        return {"message": "User not found", 'is_error': True}
     return {
         "id": data.id,
         "name": data.name,
