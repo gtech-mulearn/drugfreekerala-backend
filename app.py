@@ -1,18 +1,18 @@
 from fastapi import Depends, FastAPI, Query
 from fastapi.responses import ORJSONResponse
 from pydantic import EmailStr
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+from starlette import status
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse
-from starlette import status
+
 from db.connection import get_session
 from db.models import UserData
 from schemas import CreateUserDataRequest
 from settings import settings
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
 
 application = FastAPI(default_response_class=ORJSONResponse)
-
 
 application.add_middleware(
     CORSMiddleware,
@@ -36,12 +36,14 @@ async def create(data: CreateUserDataRequest, session: Session = Depends(get_ses
         session.commit()
         return {"message": "User created", 'id': data.id}
     except IntegrityError:
-        return {"message": "User already exists", 'is_error': True}
+        data = session.query(UserData).filter(UserData.email == data.email).first()
+        return {"message": "User already exists", 'is_error': True, 'id': data.id, 'name': data.name,
+                'email': data.email}
 
 
 @application.get("/api/v1/drugfreekerala/get/", description="Get all users")
 async def get_all_users(
-    session: Session = Depends(get_session), email: EmailStr = Query(...)
+        session: Session = Depends(get_session), email: EmailStr = Query(...)
 ):
     data = session.query(UserData).filter(UserData.email == email).first()
     if not data:
