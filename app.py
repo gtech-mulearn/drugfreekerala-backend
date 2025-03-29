@@ -36,6 +36,7 @@ async def create(data: CreateUserDataRequest, session: Session = Depends(get_ses
         session.commit()
         return {"message": "User created", 'id': data.id}
     except IntegrityError:
+        session.rollback()
         data = session.query(UserData).filter(UserData.email == data.email).first()
         return {"message": "User already exists", 'is_error': True, 'id': data.id, 'name': data.name,
                 'email': data.email}
