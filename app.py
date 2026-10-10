@@ -31,15 +31,22 @@ async def ping():
 @application.post("/api/v1/drugfreekerala/create/", description="Create a new user")
 async def create(data: CreateUserDataRequest, session: Session = Depends(get_session)):
     try:
-        data = UserData(name=data.name, email=data.email)
-        session.add(data)
+        user = UserData(
+            name=data.name,
+            email=data.email,
+            is_student=data.is_student,
+            college_id=str(data.college_id) if data.college_id else None,
+            college_name=data.college_name,
+        )
+        session.add(user)
         session.commit()
-        return {"message": "User created", 'id': data.id}
+        # College is stored but never returned: get/ answers for any email.
+        return {"message": "User created", 'id': user.id, 'name': user.name, 'email': user.email}
     except IntegrityError:
         session.rollback()
-        data = session.query(UserData).filter(UserData.email == data.email).first()
-        return {"message": "User already exists", 'is_error': True, 'id': data.id, 'name': data.name,
-                'email': data.email}
+        user = session.query(UserData).filter(UserData.email == data.email).first()
+        return {"message": "User already exists", 'is_error': True, 'id': user.id, 'name': user.name,
+                'email': user.email}
 
 
 @application.get("/api/v1/drugfreekerala/get/", description="Get all users")
